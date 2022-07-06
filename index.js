@@ -9,7 +9,6 @@ app.use(cors());
 const db = auth.firestore();
 const User = db.collection("Category");
 
-
 app.get("/getCategory/:id", async (req, res) => {
   const snapshot = await User.get();
   const id = snapshot.docs.map((doc) => doc.id);
@@ -19,13 +18,13 @@ app.get("/getCategory/:id", async (req, res) => {
 app.get("/getCategory", async (req, res) => {
   const snapshot = await User.get();
   const list = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-  res.send(list)
+  res.send(list);
 });
 
 app.get("/getCategory", async (req, res) => {
   const snapshot = await User.get();
   const list = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-  res.send(list)
+  res.send(list);
 });
 
 app.post("/createCategory", async (req, res) => {
@@ -44,7 +43,6 @@ app.post("/updateCategory/:id", async (req, res) => {
   });
 });
 
-
 app.post("/createProduct", async (req, res) => {
   const Product = db.collection("Product");
   const data = req.body;
@@ -56,7 +54,7 @@ app.get("/getProduct", async (req, res) => {
   const Product = db.collection("Product");
   const snapshot = await Product.get();
   const list = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-  res.send(list)
+  res.send(list);
 });
 
 app.post("/createForm", async (req, res) => {
@@ -67,46 +65,50 @@ app.post("/createForm", async (req, res) => {
   res.send({ msg: "Form Add" });
 });
 
+app.post("/updateCategory/:id", async (req, res) => {
+  const Form = db.collection("Form");
+  const id = req.params.id;
+  delete req.body.id;
+  const data = req.body;
+  await Form.doc(id).update(data);
+  res.send({
+    data: data,
+  });
+});
 async function joinsCollectionsHandler(req, res) {
   const binsRef = await db.collection("Form").get();
-  const binData = binsRef.docs.map(doc => doc.data());
+  const binData = binsRef.docs.map((doc) => doc.data());
   const CategoryRef = await db.collection("Category").get();
-  const CategoryData = CategoryRef.docs.map(doc => doc.data());
+  const CategoryData = CategoryRef.docs.map((doc) => doc.data());
   const binsInfoRef = await db.collection("Product").get();
-  const binInfoData = binsInfoRef.docs.map(doc => doc.data());
-  console.log(binData)
-  
-  const data = binData.map(bin => {
-   
-    const { ProductID ,CategoryID} = bin;
-    const cate = CategoryData.filter(
+  const binInfoData = binsInfoRef.docs.map((doc) => doc.data());
+  console.log(binData);
 
-      doc => doc.CategoryID === CategoryID
-    );
-    const det = binInfoData.filter(
-
-      doc => doc.ProductID === ProductID
-    );
-    return { ...bin, det,cate };
+  const data = binData.map((bin) => {
+    const { ProductID, CategoryID } = bin;
+    const cate = CategoryData.filter((doc) => doc.CategoryID === CategoryID);
+    const det = binInfoData.filter((doc) => doc.ProductID === ProductID);
+    return { ...bin, det, cate };
   });
- 
+
   res.json(data);
 }
 app.get("/twoColectionJoin", joinsCollectionsHandler);
 
-
-app.get("/getForm/:ProductID", async (req, res) => {
-  const Form = db.collection("Form");
-  const snapshot = await Form.get();
-  const list = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-  const ProductID = req.params.ProductID;
-  const prodict = await db.collection("Product").where('ProductID',"==",ProductID)
-  const data = await prodict.get();
-  if(!data.exists){
-    res.status(404).send('failed')
-  }else{
-    res.send(data.data())
+app.get("/getProduct2", async (req,res) => {
+let type = req.body.type
+let Name =req.body.Name
+  if(req.body.type != null){
+    let commentsQuery = await db.collection("Form").where("ProductID", "==", type).get()
+    let mapping = commentsQuery.docs.map((doc)=> doc.data())
+    res.send(mapping);
   }
+  if(req.body.Name != null){
+    let commentsQuery = await db.collection("Form").where("Name", "==", Name).get()
+    let mapping = commentsQuery.docs.map((doc)=> doc.data())
+    res.send(mapping);
+  }
+
 });
 
 app.post("/deleteCategory", async (req, res) => {
@@ -117,20 +119,40 @@ app.post("/deleteCategory", async (req, res) => {
   });
 });
 
-
 app.post("/csv", async (req, res) => {
   const XLSX = require("xlsx");
+  const binsRef = await db.collection("Form").get();
+  const binData = binsRef.docs.map((doc) => doc.data());
+  const CategoryRef = await db.collection("Category").get();
+  const CategoryData = CategoryRef.docs.map((doc) => doc.data());
+  const binsInfoRef = await db.collection("Product").get();
+  const binInfoData = binsInfoRef.docs.map((doc) => doc.data());
   const snapshot = await User.get();
-  const list = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-  data = [];
-  for (let i = 0; i < list.length; i++) {
+  const data = binData.map((bin) => {
+    const { ProductID, CategoryID } = bin;
+    const cate = CategoryData.filter((doc) => doc.CategoryID === CategoryID);
+    const det = binInfoData.filter((doc) => doc.ProductID === ProductID);
+    return { ...bin, det, cate };
+  });  
+  data2 = [];
+
+  for (let i = 0; i < data.length; i++) {
     const students = [
-      { Collage: list[i].Collage, name: list[i].name, stu: list[i].stu },
+      { CategoryID: data[i].det[i].CategoryID, ProductID: data[i].det[i].ProductID, 
+        ProductName: data[i].det[i].ProductName,Adress:data[i].det[i].Adress,Price:data[i].det[i].Price ,
+        sqm:data[i].det[i].sqm,bedroom:data[i].det[i].bedroom,bathroom:data[i].det[i].bathroom,
+        Parking:data[i].det[i].Parking,Postdate:data[i].date,bathroom:data[i].det[i].bathroom,
+        Name:data[i].Name,Tel:data[i].Tel,Consent:data[i].Consent,
+        Status:data[i].Status,Remark:data[i].Remark,update:data[i].update,
+
+      
+      },
     ];
-    data.push(...students);
+    data2.push(...students);
   }
+  console.log(data2)
   const convertJsonToexcel = () => {
-    const workSheet = XLSX.utils.json_to_sheet(data);
+    const workSheet = XLSX.utils.json_to_sheet(data2);
     const workBook = XLSX.utils.book_new();
 
     XLSX.utils.book_append_sheet(workBook, workSheet, "students");
@@ -142,12 +164,10 @@ app.post("/csv", async (req, res) => {
     //binary string
     XLSX.write(workBook, { bookType: "xlsx", type: "binary" });
 
-    const excel = XLSX.writeFile(workBook, "studentsdata.xlsx");
+    const excel = XLSX.writeFile(workBook, "HouseData.xlsx");
     res.send(excel);
   };
   convertJsonToexcel();
-  
-
 });
 
 app.listen(4000, () => console.log("Up & Running *4000"));
