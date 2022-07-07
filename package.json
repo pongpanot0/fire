@@ -8,6 +8,9 @@
     "build": "webpack",
     "heroku-postbuild": "echo Skip build on Heroku"
   },
+  "engines": {
+    "node": "14.x"
+  },
   "author": "",
   "license": "ISC",
   "description": "",
@@ -24,5 +27,6 @@
     "nodemon": "^2.0.19",
     "xlsx": "^0.18.5"
   },
-  "heroku-run-build-script": true
+  "heroku-run-build-script": false
+  
 }
