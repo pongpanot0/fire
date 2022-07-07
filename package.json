@@ -1,50 +1,28 @@
 {
-
   "name": "nodejsfirebase",
-
   "version": "1.0.0",
-
   "main": "index.js",
-
   "scripts": {
-
     "start": "nodemon index.js",
-
-    "test": "echo \"Error: no test specified\" && exit 1"
-
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack",
+    "heroku-postbuild": "echo Skip build on Heroku"
   },
-
   "author": "",
-
   "license": "ISC",
-
   "description": "",
-
   "dependencies": {
-
     "cors": "^2.8.5",
-
     "excel4node": "^1.7.2",
-
     "exphbs": "^1.2.0",
-
     "express": "^4.18.1",
-
     "firebase": "^9.8.4",
-
     "firebase-admin": "^11.0.0",
-
     "firebase-relationship": "^1.0.1",
-
     "json2csv": "^5.0.7",
-
     "node-firestore-import-export": "^1.1.0",
-
     "nodemon": "^2.0.19",
-
     "xlsx": "^0.18.5"
-
-  }
-
+  },
+  "heroku-run-build-script": true
 }
-
