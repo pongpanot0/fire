@@ -21,11 +21,6 @@ app.get("/getCategory", async (req, res) => {
   res.send(list);
 });
 
-app.get("/getCategory", async (req, res) => {
-  const snapshot = await User.get();
-  const list = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-  res.send(list);
-});
 
 app.post("/createCategory", async (req, res) => {
   const data = req.body;
@@ -64,8 +59,7 @@ app.post("/createForm", async (req, res) => {
   await Form.add(data);
   res.send({ msg: "Form Add" });
 });
-
-app.post("/updateCategory/:id", async (req, res) => {
+app.put("/updateFormy/:id", async (req, res) => {
   const Form = db.collection("Form");
   const id = req.params.id;
   delete req.body.id;
@@ -77,12 +71,11 @@ app.post("/updateCategory/:id", async (req, res) => {
 });
 async function joinsCollectionsHandler(req, res) {
   const binsRef = await db.collection("Form").get();
-  const binData = binsRef.docs.map((doc) => doc.data());
+  const binData = binsRef.docs.map((doc) =>  ({ id: doc.id, ...doc.data() }));
   const CategoryRef = await db.collection("Category").get();
   const CategoryData = CategoryRef.docs.map((doc) => doc.data());
   const binsInfoRef = await db.collection("Product").get();
   const binInfoData = binsInfoRef.docs.map((doc) => doc.data());
-  console.log(binData);
 
   const data = binData.map((bin) => {
     const { ProductID, CategoryID } = bin;
@@ -90,10 +83,31 @@ async function joinsCollectionsHandler(req, res) {
     const det = binInfoData.filter((doc) => doc.ProductID === ProductID);
     return { ...bin, det, cate };
   });
-
+  
   res.json(data);
 }
 app.get("/twoColectionJoin", joinsCollectionsHandler);
+
+
+async function joinsCollectionsHandler2(req, res) {
+  id = req.params.id
+  const binsRef = await db.collection("Form").where("__name__","==",id).get();
+  const binData = binsRef.docs.map((doc) =>  ({ id: doc.id, ...doc.data() }));
+  const CategoryRef = await db.collection("Category").get();
+  const CategoryData = CategoryRef.docs.map((doc) => doc.data());
+  const binsInfoRef = await db.collection("Product").get();
+  const binInfoData = binsInfoRef.docs.map((doc) => doc.data());
+
+  const data = binData.map((bin) => {
+    const { ProductID, CategoryID } = bin;
+    const cate = CategoryData.filter((doc) => doc.CategoryID === CategoryID);
+    const det = binInfoData.filter((doc) => doc.ProductID === ProductID);
+    return { ...bin, det, cate };
+  });
+  
+  res.json(data);
+}
+app.get("/twoColectionJoin2/:id", joinsCollectionsHandler2);
 
 app.get("/getProduct2", async (req,res) => {
 let type = req.body.type
@@ -111,15 +125,18 @@ let Name =req.body.Name
 
 });
 
-app.post("/deleteCategory", async (req, res) => {
-  const id = req.body.id;
-  await User.doc(id).delete();
+app.delete("/deleteForm/:id", async (req, res) => {
+  const Form = db.collection("Form");
+  const id = req.params.id;
+  await Form.doc(id).delete();
   res.send({
     data: "Delted",
   });
 });
 
-app.post("/csv", async (req, res) => {
+
+
+app.get("/csv", async (err, results) => {
   const XLSX = require("xlsx");
   const binsRef = await db.collection("Form").get();
   const binData = binsRef.docs.map((doc) => doc.data());
@@ -127,7 +144,6 @@ app.post("/csv", async (req, res) => {
   const CategoryData = CategoryRef.docs.map((doc) => doc.data());
   const binsInfoRef = await db.collection("Product").get();
   const binInfoData = binsInfoRef.docs.map((doc) => doc.data());
-  const snapshot = await User.get();
   const data = binData.map((bin) => {
     const { ProductID, CategoryID } = bin;
     const cate = CategoryData.filter((doc) => doc.CategoryID === CategoryID);
@@ -135,19 +151,24 @@ app.post("/csv", async (req, res) => {
     return { ...bin, det, cate };
   });  
   data2 = [];
-
+  
   for (let i = 0; i < data.length; i++) {
+ 
+  
+    console.log(data[i].det[0]['ProductName'])
     const students = [
-      { CategoryID: data[i].det[i].CategoryID, ProductID: data[i].det[i].ProductID, 
-        ProductName: data[i].det[i].ProductName,Adress:data[i].det[i].Adress,Price:data[i].det[i].Price ,
-        sqm:data[i].det[i].sqm,bedroom:data[i].det[i].bedroom,bathroom:data[i].det[i].bathroom,
-        Parking:data[i].det[i].Parking,Postdate:data[i].date,bathroom:data[i].det[i].bathroom,
+      { CategoryID: data[i].CategoryID, ProductID: data[i].ProductID, 
+        ProductName: data[i].det[0]['ProductName'],Adress:data[i].det[0]['Adress'],Price:data[i].det[0]['Price'] ,
+        sqm:data[i].det[0]['sqm'],bedroom:data[i].det[0]['bedroom'],bathroom:data[i].det[0]['bathroom'],
+        Parking:data[i].det[0]['Parking'],Postdate:data[i].date,bathroom:data[i].det[0]['Price'],
         Name:data[i].Name,Tel:data[i].Tel,Consent:data[i].Consent,
         Status:data[i].Status,Remark:data[i].Remark,update:data[i].update,
 
       
       },
     ];
+
+    if(data[i].update === null) data.update === "ยังไม่มีการอัพเดท"
     data2.push(...students);
   }
   console.log(data2)
@@ -155,19 +176,30 @@ app.post("/csv", async (req, res) => {
     const workSheet = XLSX.utils.json_to_sheet(data2);
     const workBook = XLSX.utils.book_new();
 
-    XLSX.utils.book_append_sheet(workBook, workSheet, "students");
+    XLSX.utils.book_append_sheet(workBook, workSheet, "HouseData");
     //binary buffer
     XLSX.write(workBook, {
       bookType: "xlsx",
       type: "buffer",
     });
     //binary string
-    XLSX.write(workBook, { bookType: "xlsx", type: "binary" });
+    const fs = require('fs');
+    const filename = "users.xlsx";
+    const wb_opts = {bookType: 'xlsx', type: 'binary'};   // workbook options
+    XLSX.writeFile(workBook, filename, wb_opts);                // write workbook file
+    const stream = fs.createReadStream(filename);         // create read stream
+    stream.on('open', function () {
+      // This just pipes the read stream to the response object (which goes to the client)
+      stream.pipe(results)
+     
+    });
 
-    const excel = XLSX.writeFile(workBook, "HouseData.xlsx");
-    res.send(excel);
+  
   };
   convertJsonToexcel();
+  
 });
 
-app.listen(4000, () => console.log("Up & Running *4000"));
+var port_number = app.listen(process.env.PORT || 4000);
+app.listen(port_number);
+
