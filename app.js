@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 
 const auth = require("./config");
+const e = require("express");
 const app = express();
 app.use(express.json());
 app.use(cors());
@@ -55,9 +56,22 @@ app.get("/getProduct", async (req, res) => {
 app.post("/createForm", async (req, res) => {
   const Form = db.collection("Form");
   const data = req.body;
-  console.log("data of User", data);
-  await Form.add(data);
-  res.send({ msg: "Form Add" });
+  console.log(data)
+  if(data.checked === true) {
+    data.Consent = 'ยินยอมให้เก็บข้อมูลส่วนบุคคล'
+    await Form.add(data);
+    console.log(data.Consent)
+    res.send({ msg: "Form Add" });
+  }
+  if(data.checked === !true) {
+    data.Consent = 'ไม่ยินยอมให้เก็บข้อมูลส่วนบุคคล'
+    await Form.add(data);
+    console.log(data.Consent)
+    res.send({ msg: "Form Add" });
+
+  }
+
+
 });
 app.put("/updateFormy/:id", async (req, res) => {
   const Form = db.collection("Form");
@@ -163,8 +177,6 @@ app.get("/csv", async (err, results) => {
         Parking:data[i].det[0]['Parking'],Postdate:data[i].date,bathroom:data[i].det[0]['Price'],
         Name:data[i].Name,Tel:data[i].Tel,Consent:data[i].Consent,
         Status:data[i].Status,Remark:data[i].Remark,update:data[i].update,
-
-      
       },
     ];
 
